@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9366604e1591645d8addbc494f94f69e, type: 3}
+  m_Name: MonsterCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::MercuryStudioAssignment.MonsterCatalog
+  _monsters:
+  - {fileID: 21300000, guid: e2b2c514b664c4fe9a9ea552fb7accbf, type: 3}
+  - {fileID: 21300000, guid: bc406e2c2e6634677a2e3931f1f932e1, type: 3}
+  - {fileID: 21300000, guid: 9458d2a506cc941298c06277a97b1d31, type: 3}
+  - {fileID: 21300000, guid: 083e01a7f452942c1b096be6537222be, type: 3}
+  - {fileID: 21300000, guid: 37a942241e5234b0cb07808ceb135163, type: 3}
+  - {fileID: 21300000, guid: be16e644b7bcd430da66e9eadb690bf6, type: 3}
+  - {fileID: 21300000, guid: 3fbbeade295f44f90a02c2c7cbe2d3df, type: 3}
+  - {fileID: 21300000, guid: 9b265dfa8fe6b4f01894d1aec06055e9, type: 3}
+  - {fileID: 21300000, guid: 175bcae70d60e4a658fe41de52c69df4, type: 3}
