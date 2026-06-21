@@ -7,7 +7,7 @@ namespace MercuryStudioAssignment
     [Serializable]
     public class SpinMotion
     {
-        public enum Phase { Idle, Anticipate, SpinUp, Cruise, Approaching, Bounce, Done }
+        public enum Phase { Idle, Anticipate, SpinUp, Cruise, Approaching, Impact, Settle, Done }
 
         [Header("Anticipate (lùi lấy đà)")]
         [SerializeField] private float _anticipateDistance = 60f;
@@ -17,10 +17,9 @@ namespace MercuryStudioAssignment
         [SerializeField] private float _cruiseSpeed = 2600f;
         [SerializeField] private float _spinUpDuration = 0.25f;
 
-        [Header("Bounce (dip xuống rồi nảy lên settle)")]
+        [Header("Bounce — nửa xuống đập theo cruise, nửa lên ease-out về tâm")]
         [SerializeField] private float _bounceDip = 70f;
         [SerializeField] private float _bounceDuration = 0.35f;
-        [SerializeField] private float _bounceDamping = 6f;
 
         public Phase Current { get; private set; } = Phase.Idle;
         public float Distance { get; private set; }
@@ -28,7 +27,7 @@ namespace MercuryStudioAssignment
 
         public bool IsActive => Current != Phase.Idle && Current != Phase.Done;
         public bool IsCruising => Current == Phase.Cruise;
-        public bool IsStopping => Current == Phase.Approaching || Current == Phase.Bounce;
+        public bool IsStopping => Current == Phase.Approaching || Current == Phase.Impact || Current == Phase.Settle;
 
         private float _phaseTime;
         private float _phaseStartDistance;
@@ -62,7 +61,8 @@ namespace MercuryStudioAssignment
                 case Phase.SpinUp: TickSpinUp(); break;
                 case Phase.Cruise: Distance += _cruiseSpeed * dt; break;
                 case Phase.Approaching: TickApproaching(dt); break;
-                case Phase.Bounce: TickBounce(); break;
+                case Phase.Impact: TickImpact(dt); break;
+                case Phase.Settle: TickSettle(); break;
             }
         }
 
@@ -94,15 +94,24 @@ namespace MercuryStudioAssignment
             if (Distance >= _targetDistance)
             {
                 Distance = _targetDistance;
-                EnterPhase(Phase.Bounce);
+                EnterPhase(Phase.Impact);
             }
         }
 
-        private void TickBounce()
+        private void TickImpact(float dt)
+        {
+            Distance += _cruiseSpeed * dt;
+            if (Distance >= _targetDistance + _bounceDip)
+            {
+                Distance = _targetDistance + _bounceDip;
+                EnterPhase(Phase.Settle);
+            }
+        }
+
+        private void TickSettle()
         {
             float t = Mathf.Clamp01(_phaseTime / _bounceDuration);
-            float offset = _bounceDip * Easing.DampedHalfSine(t, _bounceDamping);
-            Distance = _targetDistance + offset;
+            Distance = (_targetDistance + _bounceDip) - Easing.OutQuad(t) * _bounceDip;
             if (t >= 1f)
             {
                 Distance = _targetDistance;

@@ -1582,9 +1582,8 @@ MonoBehaviour:
     _anticipateDuration: 0.2
     _cruiseSpeed: 1250
     _spinUpDuration: 0.25
-    _bounceDip: 400
-    _bounceDuration: 0.8
-    _bounceDamping: 6
+    _bounceDip: 100
+    _bounceDuration: 0.5
 --- !u!4 &1379375971
 Transform:
   m_ObjectHideFlags: 0
