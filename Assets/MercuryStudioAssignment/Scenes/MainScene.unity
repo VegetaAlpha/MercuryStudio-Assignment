@@ -1540,7 +1540,7 @@ GameObject:
   - component: {fileID: 1379375970}
   - component: {fileID: 1379375969}
   m_Layer: 0
-  m_Name: MonsterWheelGame
+  m_Name: MonsterWheelController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1574,7 +1574,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bf22bb13d98d14a6f95f26468dcb9c74, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MercuryStudioAssignment.MonsterWheelGame
+  m_EditorClassIdentifier: Assembly-CSharp::MercuryStudioAssignment.MonsterWheelController
   _catalog: {fileID: 11400000, guid: ddf59d90146f6428bab5a16fc9384162, type: 2}
   _scroller: {fileID: 1379375969}
   _motion:
