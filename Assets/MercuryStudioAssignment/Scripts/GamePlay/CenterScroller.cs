@@ -15,7 +15,9 @@ namespace MercuryStudioAssignment
         [Tooltip("Số cell đệm thêm ngoài viewport mỗi phía.")]
         [SerializeField] private int _buffer = 1;
 
-        [SerializeField] private SpinMotion _motion = new SpinMotion();
+        [SerializeField] private SpinMotionConfig _motionConfig;
+
+        private SpinMotion _motion;
 
         private MonsterCell[] _cells;
         private float _baseTopY;
@@ -35,6 +37,8 @@ namespace MercuryStudioAssignment
         public void Initialize()
         {
             if (Initialized) return;
+
+            _motion = new SpinMotion(_motionConfig);
 
             float vh = _viewport.rect.height;
             int rowsAboveCenter = Mathf.CeilToInt((vh * 0.5f) / _step);

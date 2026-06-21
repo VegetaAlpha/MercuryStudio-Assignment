@@ -1,29 +1,22 @@
-using System;
 using UnityEngine;
 using VegetaSystem;
 
 namespace MercuryStudioAssignment
 {
-    [Serializable]
     public class SpinMotion
     {
         public enum Phase { Idle, Anticipate, SpinUp, Cruise, Approaching, Impact, Settle, Done }
 
-        [Header("Anticipate (lùi lấy đà)")]
-        [SerializeField] private float _anticipateDistance = 60f;
-        [SerializeField] private float _anticipateDuration = 0.12f;
+        private readonly SpinMotionConfig _config;
 
-        [Header("Spin up")]
-        [SerializeField] private float _cruiseSpeed = 2600f;
-        [SerializeField] private float _spinUpDuration = 0.25f;
-
-        [Header("Bounce — nửa xuống đập theo cruise, nửa lên ease-out về tâm")]
-        [SerializeField] private float _bounceDip = 70f;
-        [SerializeField] private float _bounceDuration = 0.35f;
+        public SpinMotion(SpinMotionConfig config)
+        {
+            _config = config;
+        }
 
         public Phase Current { get; private set; } = Phase.Idle;
         public float Distance { get; private set; }
-        public float BounceDip => _bounceDip;
+        public float BounceDip => _config.BounceDip;
 
         public bool IsActive => Current != Phase.Idle && Current != Phase.Done;
         public bool IsCruising => Current == Phase.Cruise;
@@ -59,7 +52,7 @@ namespace MercuryStudioAssignment
             {
                 case Phase.Anticipate: TickAnticipate(); break;
                 case Phase.SpinUp: TickSpinUp(); break;
-                case Phase.Cruise: Distance += _cruiseSpeed * dt; break;
+                case Phase.Cruise: Distance += _config.CruiseSpeed * dt; break;
                 case Phase.Approaching: TickApproaching(dt); break;
                 case Phase.Impact: TickImpact(dt); break;
                 case Phase.Settle: TickSettle(); break;
@@ -75,22 +68,22 @@ namespace MercuryStudioAssignment
 
         private void TickAnticipate()
         {
-            float t = Mathf.Clamp01(_phaseTime / _anticipateDuration);
-            Distance = _phaseStartDistance - Easing.OutQuad(t) * _anticipateDistance;
+            float t = Mathf.Clamp01(_phaseTime / _config.AnticipateDuration);
+            Distance = _phaseStartDistance - Easing.OutQuad(t) * _config.AnticipateDistance;
             if (t >= 1f) EnterPhase(Phase.SpinUp);
         }
 
         private void TickSpinUp()
         {
-            float t = Mathf.Clamp01(_phaseTime / _spinUpDuration);
-            float covered = _cruiseSpeed * _spinUpDuration * Easing.InCubic(t) / 3f;
+            float t = Mathf.Clamp01(_phaseTime / _config.SpinUpDuration);
+            float covered = _config.CruiseSpeed * _config.SpinUpDuration * Easing.InCubic(t) / 3f;
             Distance = _phaseStartDistance + covered;
             if (t >= 1f) EnterPhase(Phase.Cruise);
         }
 
         private void TickApproaching(float dt)
         {
-            Distance += _cruiseSpeed * dt;
+            Distance += _config.CruiseSpeed * dt;
             if (Distance >= _targetDistance)
             {
                 Distance = _targetDistance;
@@ -100,18 +93,18 @@ namespace MercuryStudioAssignment
 
         private void TickImpact(float dt)
         {
-            Distance += _cruiseSpeed * dt;
-            if (Distance >= _targetDistance + _bounceDip)
+            Distance += _config.CruiseSpeed * dt;
+            if (Distance >= _targetDistance + _config.BounceDip)
             {
-                Distance = _targetDistance + _bounceDip;
+                Distance = _targetDistance + _config.BounceDip;
                 EnterPhase(Phase.Settle);
             }
         }
 
         private void TickSettle()
         {
-            float t = Mathf.Clamp01(_phaseTime / _bounceDuration);
-            Distance = (_targetDistance + _bounceDip) - Easing.OutQuad(t) * _bounceDip;
+            float t = Mathf.Clamp01(_phaseTime / _config.BounceDuration);
+            Distance = (_targetDistance + _config.BounceDip) - Easing.OutQuad(t) * _config.BounceDip;
             if (t >= 1f)
             {
                 Distance = _targetDistance;

@@ -1563,6 +1563,7 @@ MonoBehaviour:
   _content: {fileID: 225398544}
   _step: 196.19
   _buffer: 1
+  _motionConfig: {fileID: 11400000, guid: 72462fc4ea80b472389fa8b649608992, type: 2}
 --- !u!114 &1379375970
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1577,13 +1578,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MercuryStudioAssignment.MonsterWheelController
   _catalog: {fileID: 11400000, guid: ddf59d90146f6428bab5a16fc9384162, type: 2}
   _scroller: {fileID: 1379375969}
-  _motion:
-    _anticipateDistance: 80
-    _anticipateDuration: 0.2
-    _cruiseSpeed: 1250
-    _spinUpDuration: 0.25
-    _bounceDip: 100
-    _bounceDuration: 0.5
+  _wheel: {fileID: 0}
 --- !u!4 &1379375971
 Transform:
   m_ObjectHideFlags: 0
