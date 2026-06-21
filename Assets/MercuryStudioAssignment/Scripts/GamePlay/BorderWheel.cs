@@ -1,56 +1,53 @@
 using UnityEngine;
 using UnityEngine.UI;
+using VegetaSystem;
 
 namespace MercuryStudioAssignment
 {
     public class BorderWheel : MonoBehaviour
     {
-        [SerializeField] private MonsterCatalog _catalog;
         [SerializeField] private RectTransform _root;
         [SerializeField] private Image _slotPrefab;
+        [SerializeField] private BorderWheelConfig _config;
 
-        [Header("Layout")]
-        [SerializeField] private int _slotCount = 16;
-        [SerializeField] private float _radiusX = 170f;
-        [SerializeField] private float _radiusY = 320f;
+        private MonsterCatalog _catalog;
 
-        [Header("Highlight")]
-        [SerializeField] private Color _dimColor = new Color(0.18f, 0.18f, 0.2f, 1f);
-        [SerializeField] private Color _litColor = Color.white;
-
-        [Header("Spin")]
-        [SerializeField] private float _spinSpeed = 9f;
-        [SerializeField] private float _stopSpeed = 6f;
-
-        private enum State { Idle, Spinning, Stopping }
+        private enum State { Idle, SpinUp, Cruise, Decel }
         private State _state = State.Idle;
 
         private Image[] _slots;
         private int[] _slotIds;
-        private float _cursor;
-        private int _targetSlot;
+        private int _slotCount;
+
+        private float _cursor;          // lit-cursor position (cumulative slot, not wrapped)
+        private float _phaseTime;
+        private float _spinUpFrom;
+        private float _decelFrom;
+        private float _stopTarget;
         private int _litSlot = -1;
 
         public bool Initialized { get; private set; }
-        public bool IsStopping => _state == State.Stopping;
+        public bool IsSpinning => _state != State.Idle;
+        public bool IsStopping => _state == State.Decel;
 
-        public void Initialize()
+        public void Initialize(MonsterCatalog catalog)
         {
             if (Initialized) return;
 
+            _catalog = catalog;
+            _slotCount = 2 * _config.Cols + 2 * _config.Rows;
             _slots = new Image[_slotCount];
             _slotIds = new int[_slotCount];
 
+            int count = _catalog.Count;
             for (int i = 0; i < _slotCount; i++)
             {
                 Image slot = Instantiate(_slotPrefab, _root);
-                float angle = (i / (float)_slotCount) * Mathf.PI * 2f - Mathf.PI * 0.5f;
-                slot.rectTransform.anchoredPosition =
-                    new Vector2(Mathf.Cos(angle) * _radiusX, Mathf.Sin(angle) * _radiusY);
+                slot.rectTransform.anchoredPosition = PerimeterPos(i);
 
-                int id = _catalog.RandomId();
+                int id = ((_config.StartId + i) % count + count) % count;
                 slot.sprite = _catalog.GetSprite(id);
-                slot.color = _dimColor;
+                slot.color = _config.DimColor;
 
                 _slots[i] = slot;
                 _slotIds[i] = id;
@@ -59,67 +56,119 @@ namespace MercuryStudioAssignment
             Initialized = true;
         }
 
+        // slot 0 = top-left, walk CW: top → right → bottom → left. Corners belong to the
+        // horizontal rows; vertical sides hold Rows cards in the MIDDLE (corners excluded).
+        private Vector2 PerimeterPos(int i)
+        {
+            int cols = _config.Cols;
+            int rows = _config.Rows;
+            float halfW = _config.FrameWidth * 0.5f;
+            float halfH = _config.FrameHeight * 0.5f;
+            float stepX = cols > 1 ? _config.FrameWidth / (cols - 1) : 0f;
+            float stepY = _config.FrameHeight / (rows + 1);
+
+            if (i < cols)
+                return new Vector2(-halfW + stepX * i, halfH);
+
+            i -= cols;
+            if (i < rows)
+                return new Vector2(halfW, halfH - stepY * (i + 1));
+
+            i -= rows;
+            if (i < cols)
+                return new Vector2(halfW - stepX * i, -halfH);
+
+            i -= cols;
+            return new Vector2(-halfW, -halfH + stepY * (i + 1));
+        }
+
         public void StartSpin()
         {
-            _state = State.Spinning;
-            SetLit(-1);
+            _state = State.SpinUp;
+            _spinUpFrom = _cursor;
+            SetLitInstant((int)Mathf.Repeat(Mathf.Floor(_cursor), _slotCount));
         }
 
         public void StopOn(int monsterId)
         {
-            _targetSlot = FindSlotAhead(monsterId);
-            _state = State.Stopping;
+            _stopTarget = FindStopAhead(monsterId, _config.DecelSlots);
+            _decelFrom = _cursor;
+            _phaseTime = 0f;
+            _state = State.Decel;
         }
 
         public void Tick(float dt)
         {
             switch (_state)
             {
-                case State.Spinning:
-                    _cursor = Mathf.Repeat(_cursor + _spinSpeed * dt, _slotCount);
-                    SetLit(Mathf.FloorToInt(_cursor));
-                    break;
-
-                case State.Stopping:
-                    _cursor = Mathf.MoveTowards(_cursor, _targetSlot, _stopSpeed * dt);
-                    if (Mathf.Approximately(_cursor, _targetSlot))
-                    {
-                        int slot = _targetSlot % _slotCount;
-                        _cursor = slot;
-                        _targetSlot = slot;
-                        SetLit(slot);
-                        _state = State.Idle;
-                    }
-                    else
-                    {
-                        SetLit(Mathf.FloorToInt(_cursor) % _slotCount);
-                    }
-                    break;
+                case State.SpinUp:   TickSpinUp(dt); break;
+                case State.Cruise:   _cursor += _config.SpinSpeed * dt; break;
+                case State.Decel:    TickDecel(dt); break;
             }
+
+            UpdateHighlight(dt);
         }
 
-        private int FindSlotAhead(int monsterId)
+        private void TickSpinUp(float dt)
         {
-            int from = Mathf.FloorToInt(_cursor);
-            for (int step = 1; step <= _slotCount; step++)
-            {
-                int i = (from + step) % _slotCount;
-                if (_slotIds[i] == monsterId) return from + step;
-            }
-
-            // Không slot nào trùng: ép một slot phía trước mang monster đó để vẫn dừng đúng.
-            int forced = from + _slotCount / 2;
-            int slot = forced % _slotCount;
-            _slotIds[slot] = monsterId;
-            _slots[slot].sprite = _catalog.GetSprite(monsterId);
-            return forced;
+            // progress measured by DISTANCE travelled (slots), not time.
+            float traveled = _cursor - _spinUpFrom;
+            float t = Mathf.Clamp01(traveled / _config.SpinUpSlots);
+            // StartFraction is a floor so it moves immediately (avoids stall when traveled=0).
+            float ease = Mathf.Max(_config.SpinUpStartFraction, t * t);
+            _cursor += _config.SpinSpeed * ease * dt;
+            if (t >= 1f) _state = State.Cruise;
         }
 
-        private void SetLit(int slot)
+        // Linear-velocity decel (= OutQuad on position): each of the last DecelSlots cards slows
+        // evenly over DecelDuration seconds, so all of them read as visibly slowing down.
+        private void TickDecel(float dt)
+        {
+            _phaseTime += dt;
+            float dist = _stopTarget - _decelFrom;
+            float t = _config.DecelDuration > 0f ? Mathf.Clamp01(_phaseTime / _config.DecelDuration) : 1f;
+            _cursor = _decelFrom + Easing.OutQuad(t) * dist;
+            if (t >= 1f)
+            {
+                _cursor = _stopTarget;
+                SetLitInstant((int)Mathf.Repeat(_stopTarget, _slotCount));
+                _state = State.Idle;
+            }
+        }
+
+        // Cumulative integer position of a slot holding monsterId, ahead of the cursor by >= minAhead.
+        // Integer so Floor(result)%slotCount == that slot (stops exactly on it).
+        private int FindStopAhead(int monsterId, float minAhead)
+        {
+            int best = int.MaxValue;
+            for (int slot = 0; slot < _slotCount; slot++)
+            {
+                if (_slotIds[slot] != monsterId) continue;
+                int cand = Mathf.CeilToInt(_cursor) - ((Mathf.CeilToInt(_cursor) % _slotCount + _slotCount) % _slotCount) + slot;
+                while (cand - _cursor < minAhead) cand += _slotCount;
+                if (cand < best) best = cand;
+            }
+            return best;
+        }
+
+        // Enable = instant; disable = lerp toward dim (creates a fading trail behind the cursor).
+        private void UpdateHighlight(float dt)
+        {
+            if (IsSpinning)
+                SetLitInstant((int)Mathf.Repeat(Mathf.Floor(_cursor), _slotCount));
+
+            float k = 1f - Mathf.Exp(-_config.DimLerpSpeed * dt);
+            for (int i = 0; i < _slotCount; i++)
+            {
+                if (i == _litSlot) continue;
+                _slots[i].color = Color.Lerp(_slots[i].color, _config.DimColor, k);
+            }
+        }
+
+        private void SetLitInstant(int slot)
         {
             if (slot == _litSlot) return;
-            if (_litSlot >= 0) _slots[_litSlot].color = _dimColor;
-            if (slot >= 0) _slots[slot].color = _litColor;
+            _slots[slot].color = _config.LitColor;
             _litSlot = slot;
         }
     }

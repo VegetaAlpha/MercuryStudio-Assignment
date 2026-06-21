@@ -5,19 +5,15 @@ namespace MercuryStudioAssignment
 {
     public class CenterScroller : MonoBehaviour
     {
-        [SerializeField] private MonsterCatalog _catalog;
         [SerializeField] private RectTransform _viewport;
         [SerializeField] private RectTransform _content;
 
-        [Tooltip("Khoảng cách tâm-đến-tâm giữa 2 cell (px).")]
-        [SerializeField] private float _step = 240f;
-
-        [Tooltip("Số cell đệm thêm ngoài viewport mỗi phía.")]
-        [SerializeField] private int _buffer = 1;
-
         [SerializeField] private SpinMotionConfig _motionConfig;
 
+        private MonsterCatalog _catalog;
         private SpinMotion _motion;
+        private float _step;
+        private int _buffer;
 
         private MonsterCell[] _cells;
         private float _baseTopY;
@@ -34,11 +30,14 @@ namespace MercuryStudioAssignment
         public bool IsSpinning => _motion.IsActive;
         public bool IsStopping => _motion.IsStopping;
 
-        public void Initialize()
+        public void Initialize(MonsterCatalog catalog)
         {
             if (Initialized) return;
 
+            _catalog = catalog;
             _motion = new SpinMotion(_motionConfig);
+            _step = _motionConfig.Step;
+            _buffer = _motionConfig.Buffer;
 
             float vh = _viewport.rect.height;
             int rowsAboveCenter = Mathf.CeilToInt((vh * 0.5f) / _step);
@@ -87,8 +86,8 @@ namespace MercuryStudioAssignment
             int bottomRow = _topRow + (n - 1);
             while (RowY(bottomRow, distance) < _killY)
             {
-                int tailIdx = (_headIdx + n - 1) % n; // physical slot of the bottom cell
-                _headIdx = tailIdx;                   // it becomes the new top cell
+                int tailIdx = (_headIdx + n - 1) % n; // bottom cell becomes new top (O(1) recycle)
+                _headIdx = tailIdx;
                 _topRow--;
                 BindRow(_cells[tailIdx], _topRow);
                 bottomRow = _topRow + (n - 1);
@@ -103,7 +102,7 @@ namespace MercuryStudioAssignment
             }
         }
 
-        // distance↑ ⇒ y giảm ⇒ cell đi xuống. Row nhỏ ở trên, row lớn ở dưới.
+        // distance up => y down => cell moves down. Smaller row = higher. (sign-critical)
         private float RowY(int row, float distance) => _baseTopY - row * _step - distance;
 
         private void BindRow(MonsterCell cell, int row)

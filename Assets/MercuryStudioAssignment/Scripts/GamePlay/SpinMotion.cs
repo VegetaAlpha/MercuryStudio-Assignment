@@ -41,7 +41,7 @@ namespace MercuryStudioAssignment
         public void RequestStop(float targetCenterDistance)
         {
             _targetDistance = targetCenterDistance;
-            Current = Phase.Approaching; // giữ nguyên tốc độ, không giảm tốc
+            Current = Phase.Approaching;
             _phaseTime = 0f;
         }
 

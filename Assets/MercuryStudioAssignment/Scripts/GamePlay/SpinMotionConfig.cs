@@ -5,6 +5,12 @@ namespace MercuryStudioAssignment
     [CreateAssetMenu(fileName = "SpinMotionConfig", menuName = "MonsterWheel/SpinMotionConfig")]
     public class SpinMotionConfig : ScriptableObject
     {
+        [Header("Layout center scroll")]
+        [Tooltip("Khoảng cách tâm-đến-tâm giữa 2 cell (px).")]
+        public float Step = 240f;
+        [Tooltip("Số cell đệm thêm ngoài viewport mỗi phía.")]
+        public int Buffer = 1;
+
         [Header("Anticipate (lùi lấy đà)")]
         public float AnticipateDistance = 80f;
         public float AnticipateDuration = 0.2f;
