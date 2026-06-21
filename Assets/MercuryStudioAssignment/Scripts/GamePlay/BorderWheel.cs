@@ -53,6 +53,9 @@ namespace MercuryStudioAssignment
                 _slotIds[i] = id;
             }
 
+            // start the cursor at a random slot so the first spin isn't always top-left.
+            _cursor = Random.Range(0, _slotCount);
+
             Initialized = true;
         }
 
