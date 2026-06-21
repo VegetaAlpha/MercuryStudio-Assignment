@@ -15,4 +15,4 @@ MonoBehaviour:
   IsMutilple: 0
   PoolItems: []
   Prefab: {fileID: 3265153864351640332, guid: e47aa385a26fd4fff814a59495b989d3, type: 3}
-  InitAmount: 8
+  InitAmount: 0

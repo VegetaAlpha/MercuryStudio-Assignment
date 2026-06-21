@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cd7fdb2990d54924ad67329d8141f6c, type: 3}
   m_Name: SpinMotionConfig
   m_EditorClassIdentifier: Assembly-CSharp::MercuryStudioAssignment.SpinMotionConfig
+  Step: 196.19
+  Buffer: 1
   AnticipateDistance: 80
   AnticipateDuration: 0.2
   CruiseSpeed: 1250
