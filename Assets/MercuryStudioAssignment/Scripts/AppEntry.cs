@@ -13,6 +13,7 @@ namespace MercuryStudioAssignment
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Init()
         {
+            Debug.unityLogger.logEnabled = false;
             // Disable VSync so Application.targetFrameRate is respected.
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = TargetFrameRate;

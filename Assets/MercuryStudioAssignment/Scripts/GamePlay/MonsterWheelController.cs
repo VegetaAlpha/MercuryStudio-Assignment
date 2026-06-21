@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MercuryStudioAssignment
 {
     public class MonsterWheelController : MonoBehaviour
     {
+        [SerializeField] Button _spaceBtn;
         [SerializeField] private MonsterCatalog _catalog;
         [SerializeField] private CenterScroller _scroller;
         [SerializeField] private BorderWheel _wheel;
@@ -13,6 +15,16 @@ namespace MercuryStudioAssignment
         private float _spinTime;
         private bool _stopPending;
         private float _stopAt;
+
+        private void Awake()
+        {
+            _spaceBtn.onClick.AddListener(OnSpinButton);
+        }
+
+        private void OnDestroy()
+        {
+            _spaceBtn.onClick.RemoveAllListeners();
+        }
 
         private void Start()
         {
