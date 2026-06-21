@@ -13,25 +13,23 @@ namespace MercuryStudioAssignment
 
         private bool _uiPressed;
 
-        // TEST MODE: chỉ kiểm tra cuộn giữa. Space bật/tắt cuộn đều, chưa dùng anim/stop/wheel.
-        [SerializeField] private float _testScrollSpeed = 2000f;
-        private bool _testScrolling;
-        private float _testDistance;
-
         private void Start()
         {
-            _scroller.Initialize();
+            _scroller.Initialize(_motion.BounceDip);
             _motion.ResetTo(0f);
         }
 
         private void Update()
         {
-            if (GetSpinInput()) _testScrolling = !_testScrolling;
+            if (GetSpinInput()) OnSpinPressed();
 
-            if (_testScrolling)
-                _testDistance += _testScrollSpeed * Time.deltaTime;
+            _motion.Tick(Time.deltaTime);
+            _scroller.Layout(_motion.Distance);
 
-            _scroller.Layout(_testDistance);
+            if (_state == State.Stopping && _motion.Current == SpinMotion.Phase.Done)
+                _state = State.Idle;
+
+            _uiPressed = false;
         }
 
         private bool GetSpinInput()
@@ -41,9 +39,6 @@ namespace MercuryStudioAssignment
 
         public void OnSpinButton() => _uiPressed = true;
 
-        // FULL MODE (bật lại khi làm anim start/stop + wheel):
-        //   Update: GetSpinInput -> OnSpinPressed; _motion.Tick; _scroller.Layout(_motion.Distance);
-        //           Stopping + Phase.Done -> Idle; reset _uiPressed.
         private void OnSpinPressed()
         {
             switch (_state)

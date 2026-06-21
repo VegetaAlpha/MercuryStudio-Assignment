@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VegetaSystem;
 
 namespace MercuryStudioAssignment
 {
@@ -23,6 +24,7 @@ namespace MercuryStudioAssignment
 
         public Phase Current { get; private set; } = Phase.Idle;
         public float Distance { get; private set; }
+        public float BounceDip => _bounceDip;
 
         public bool IsActive => Current != Phase.Idle && Current != Phase.Done;
         public bool IsCruising => Current == Phase.Cruise;
@@ -74,15 +76,14 @@ namespace MercuryStudioAssignment
         private void TickAnticipate()
         {
             float t = Mathf.Clamp01(_phaseTime / _anticipateDuration);
-            float offset = -Mathf.Sin(t * Mathf.PI) * _anticipateDistance; // lùi lên rồi về
-            Distance = _phaseStartDistance + offset;
+            Distance = _phaseStartDistance - Easing.OutQuad(t) * _anticipateDistance;
             if (t >= 1f) EnterPhase(Phase.SpinUp);
         }
 
         private void TickSpinUp()
         {
             float t = Mathf.Clamp01(_phaseTime / _spinUpDuration);
-            float covered = _cruiseSpeed * _spinUpDuration * (t * t * t) / 3f; // ∫ cruise·u² du
+            float covered = _cruiseSpeed * _spinUpDuration * Easing.InCubic(t) / 3f;
             Distance = _phaseStartDistance + covered;
             if (t >= 1f) EnterPhase(Phase.Cruise);
         }
@@ -100,8 +101,7 @@ namespace MercuryStudioAssignment
         private void TickBounce()
         {
             float t = Mathf.Clamp01(_phaseTime / _bounceDuration);
-            float decay = Mathf.Exp(-_bounceDamping * t);
-            float offset = _bounceDip * decay * Mathf.Sin(t * Mathf.PI); // dip xuống rồi tắt dần
+            float offset = _bounceDip * Easing.DampedHalfSine(t, _bounceDamping);
             Distance = _targetDistance + offset;
             if (t >= 1f)
             {

@@ -27,16 +27,19 @@ namespace MercuryStudioAssignment
         public float Step => _step;
         public bool Initialized { get; private set; }
 
-        public void Initialize()
+        public void Initialize(float maxBounce = 0f)
         {
             if (Initialized) return;
 
             float vh = _viewport.rect.height;
-            int visible = Mathf.CeilToInt(vh / _step) + 1;
-            int count = visible + _buffer * 2;
+            int rowsAboveCenter = Mathf.CeilToInt((vh * 0.5f) / _step);
+            int visible = rowsAboveCenter * 2 + 1;
+            int bounceBuffer = Mathf.CeilToInt(maxBounce / _step) + 1;
+            int eff = Mathf.Max(_buffer, bounceBuffer);
+            int count = visible + eff * 2;
 
-            _baseTopY = vh * 0.5f + _buffer * _step;
-            _killY = -(vh * 0.5f) - _step;
+            _baseTopY = (rowsAboveCenter + eff) * _step;
+            _killY = -(vh * 0.5f) - eff * _step;
 
             _cells = new MonsterCell[count];
             _headIdx = 0;
@@ -87,8 +90,8 @@ namespace MercuryStudioAssignment
 
         public float PlanStop(float currentDistance, int monsterId, int minRowsAhead = 3)
         {
-            int centerRow = Mathf.CeilToInt((_baseTopY + currentDistance) / _step);
-            int targetRow = centerRow + Mathf.Max(1, minRowsAhead);
+            int centerRow = Mathf.FloorToInt((_baseTopY - currentDistance) / _step);
+            int targetRow = centerRow - Mathf.Max(1, minRowsAhead);
 
             _forcedRow = targetRow;
             _forcedMonsterId = monsterId;
@@ -101,7 +104,7 @@ namespace MercuryStudioAssignment
                 _cells[physical].Bind(monsterId, _catalog.GetSprite(monsterId));
             }
 
-            return targetRow * _step - _baseTopY;
+            return _baseTopY - targetRow * _step;
         }
     }
 }
