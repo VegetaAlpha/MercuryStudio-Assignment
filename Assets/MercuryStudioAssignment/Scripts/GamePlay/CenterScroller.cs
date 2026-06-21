@@ -15,6 +15,10 @@ namespace MercuryStudioAssignment
         [Tooltip("Số cell đệm thêm ngoài viewport mỗi phía.")]
         [SerializeField] private int _buffer = 1;
 
+        [SerializeField] private SpinMotionConfig _motionConfig;
+
+        private SpinMotion _motion;
+
         private MonsterCell[] _cells;
         private float _baseTopY;
         private int _headIdx;
@@ -27,14 +31,19 @@ namespace MercuryStudioAssignment
         public float Step => _step;
         public bool Initialized { get; private set; }
 
-        public void Initialize(float maxBounce = 0f)
+        public bool IsSpinning => _motion.IsActive;
+        public bool IsStopping => _motion.IsStopping;
+
+        public void Initialize()
         {
             if (Initialized) return;
+
+            _motion = new SpinMotion(_motionConfig);
 
             float vh = _viewport.rect.height;
             int rowsAboveCenter = Mathf.CeilToInt((vh * 0.5f) / _step);
             int visible = rowsAboveCenter * 2 + 1;
-            int bounceBuffer = Mathf.CeilToInt(maxBounce / _step) + 1;
+            int bounceBuffer = Mathf.CeilToInt(_motion.BounceDip / _step) + 1;
             int eff = Mathf.Max(_buffer, bounceBuffer);
             int count = visible + eff * 2;
 
@@ -52,11 +61,26 @@ namespace MercuryStudioAssignment
                 BindRow(cell, _topRow + i);
             }
 
+            _motion.ResetTo(0f);
             Layout(0f);
             Initialized = true;
         }
 
-        public void Layout(float distance)
+        public void BeginSpin() => _motion.Begin();
+
+        public void Stop(int monsterId)
+        {
+            float targetDistance = PlanStop(_motion.Distance, monsterId);
+            _motion.RequestStop(targetDistance);
+        }
+
+        public void Tick(float dt)
+        {
+            _motion.Tick(dt);
+            Layout(_motion.Distance);
+        }
+
+        private void Layout(float distance)
         {
             int n = _cells.Length;
 
@@ -88,7 +112,7 @@ namespace MercuryStudioAssignment
             cell.Bind(id, _catalog.GetSprite(id));
         }
 
-        public float PlanStop(float currentDistance, int monsterId, int minRowsAhead = 3)
+        private float PlanStop(float currentDistance, int monsterId, int minRowsAhead = 3)
         {
             int centerRow = Mathf.FloorToInt((_baseTopY - currentDistance) / _step);
             int targetRow = centerRow - Mathf.Max(1, minRowsAhead);
