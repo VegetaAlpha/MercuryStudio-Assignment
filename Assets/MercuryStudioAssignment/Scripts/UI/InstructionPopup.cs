@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 public class InstructionPopup : MonoBehaviour
 {
+    public static bool IsOpen { get; private set; }
+
     [SerializeField] Button _okBtn;
     [SerializeField] CanvasGroup _canvasGroup;
 
@@ -15,10 +17,12 @@ public class InstructionPopup : MonoBehaviour
     private void OnDestroy()
     {
         _okBtn.onClick.RemoveAllListeners();
+        IsOpen = false;
     }
 
     private void SetEnable(bool value)
     {
+        IsOpen = value;
         if (value)
         {
             _canvasGroup.alpha = 1;
