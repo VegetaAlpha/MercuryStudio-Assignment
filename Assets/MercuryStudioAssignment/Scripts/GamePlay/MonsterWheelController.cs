@@ -52,7 +52,7 @@ namespace MercuryStudioAssignment
 
         private bool GetSpinInput()
         {
-            return Input.GetKeyDown(KeyCode.Space) || _uiPressed;
+            return _uiPressed; // Input.GetKeyDown(KeyCode.Space) || 
         }
 
         public void OnSpinButton() => _uiPressed = true;
