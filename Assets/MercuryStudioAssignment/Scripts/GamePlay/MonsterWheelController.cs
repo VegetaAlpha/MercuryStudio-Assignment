@@ -18,12 +18,19 @@ namespace MercuryStudioAssignment
 
         private void Awake()
         {
+#if UNITY_STANDALONE && !UNITY_EDITOR
+            _spaceBtn.gameObject.SetActive(false);
+#else
+            _spaceBtn.gameObject.SetActive(true);
             _spaceBtn.onClick.AddListener(OnSpinButton);
+#endif
         }
 
         private void OnDestroy()
         {
+#if !(UNITY_STANDALONE && !UNITY_EDITOR)
             _spaceBtn.onClick.RemoveAllListeners();
+#endif
         }
 
         private void Start()
@@ -52,7 +59,8 @@ namespace MercuryStudioAssignment
 
         private bool GetSpinInput()
         {
-            return _uiPressed; // Input.GetKeyDown(KeyCode.Space) || 
+            if (InstructionPopup.IsOpen) return false;
+            return Input.GetKeyDown(KeyCode.Space) || _uiPressed;
         }
 
         public void OnSpinButton() => _uiPressed = true;
